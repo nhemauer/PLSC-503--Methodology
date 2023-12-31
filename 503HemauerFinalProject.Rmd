@@ -1,0 +1,45 @@
+---
+title: "503 Hemauer Final Project"
+output: html_notebook
+---
+
+Analysis
+
+```{r}
+
+library(tidyr)
+library(haven)
+library(dplyr)
+
+data <- read_dta("C:/Users/ndhem/Downloads/CCES20.dta")
+data2 <- read_dta("C:/Users/ndhem/Downloads/CCES20UTK.dta")
+
+finalData <- merge(data, data2, by = "caseid") #Merge both Ojeda data and baseline data by caseid
+
+finalData <- finalData %>% drop_na(votereg_f.x) #Drop those who weren't matched to voter records
+
+finalData <- mutate(finalData, finalSum = utk516 + utk517 + utk518 + utk519 + utk520 + utk521) #Depression sum
+#finalData <- mutate(finalData, vote = votereg_f.x - 1) #Rescaling numbers
+
+finalData <- mutate(finalData, vote = votereg_f.x)
+
+finalData$vote[finalData$vote == 2] <- 0 #Rescale the CES wrong scale
+#replace 0 with 1 and 1 with 0
+finalData$vote[finalData$vote == 2] <- 0 #Rescale the CES wrong scale
+#replace 0 with 1 and 1 with 0
+finalData$vote[finalData$vote == 2] <- 0 #Rescale the CES wrong scale
+#replace 0 with 1 and 1 with 0
+finalData$vote[finalData$vote == 2] <- 0 #Rescale the CES wrong scale
+#replace 0 with 1 and 1 with 0
+finalData$vote[finalData$vote == 2] <- 0 #Rescale the CES wrong scale
+#replace 0 with 1 and 1 with 0
+finalData$vote[finalData$vote == 2] <- 0 #Rescale the CES wrong scale
+#replace 0 with 1 and 1 with 0
+
+
+
+modelVote <- glm(data = finalData, family = binomial, formula = vote ~ finalSum + birthyr.x + gender.x + educ.x + sexuality.x + hispanic.x + region.x + cc20_309e.x)
+summary(modelVote)
+
+```
+

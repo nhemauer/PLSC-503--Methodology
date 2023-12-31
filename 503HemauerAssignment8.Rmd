@@ -1,0 +1,109 @@
+---
+title: "503 Hemauer Assignment 8"
+output: html_notebook
+---
+
+Part 1
+
+1.
+
+```{r}
+
+library(plyr)
+
+set.seed(1337)
+
+N <- 1000
+
+estimateOLS <- function(){
+
+  X1 <- runif(N, 0, 1)
+  X2 <- runif(N, 0, 1)
+  X3 <- runif(N, 0, 1)
+  u <- rlogis(N, 0, 1)
+
+  Y <- pmax(0, pmin(1, (2 * X1) - (4 * X2) + (3 * X3) + u))
+
+  model <- lm(Y ~ X1 + X2 + X3)
+
+  predicts <- predict(model)
+
+  sum <- sum(predicts > 1 | predicts <= 0)
+
+  return(sum)
+
+}
+
+finalEst <- rdply(1000, estimateOLS)
+
+mean(finalEst$V1) / 1000 * 100
+
+```
+My simulation produced 6.6%. I believe this is the case due to the error term (u), as it is not limited; thus it pushes the prediction outside of the [0, 1] range.
+
+2.
+
+```{r warning = FALSE}
+
+X1 <- runif(N, 0, 1)
+X2 <- runif(N, 0, 1)
+X3 <- runif(N, 0, 1)
+u <- rlogis(N, 0, 1)
+
+Y <- pmax(0, pmin(1, (2 * X1) - (4 * X2) + (3 * X3) + u))
+
+model <- glm(Y ~ X1 + X2 + X3, family = "binomial")
+summary(model)
+
+plot(model)
+
+```
+
+My coefficient estimates in the logit follow the same beta coefficients that I input in the y function (2, -4, 3).
+
+3.
+
+```{r}
+
+X1 <- runif(N, 0, 1)
+X2 <- runif(N, 0, 1)
+X3 <- runif(N, 0, 1)
+u <- rlogis(N, 0, 5)
+
+Y <- pmax(0, pmin(1, (2 * X1) - (4 * X2) + (3 * X3) + u))
+
+model <- glm(Y ~ X1 + X2 + X3, family = "binomial")
+summary(model)
+
+plot(model)
+```
+The Normal Q-Q Plot is significantly smaller in scale when using the Logistic scale of 5, as compared to 1. This is further shown in the regression coefficients which are significantly smaller than the 1 scale, yet the standard errors are roughly the same. This makes sense, as the "scale" part of the function() addressed overdispersion, when data admit more variability than expected under the assumed distribution.
+
+Overdispersion in logistic regression can be tested by: deviance(model)/df.risidual(fit). A ratio close to 1 indicates no overdispersion problem.
+
+Part 2
+
+1.
+
+```{r}
+
+library(pscl)
+
+data <- read.csv("https://raw.githubusercontent.com/PrisonRodeo/PLSC503-2023-git/main/Exercises/PLSC503-2023-ExerciseEight.csv")
+
+#StealShampoo ~ GOP + Democrat + Income + Age + Female + Education + White + Black + Asian
+
+model <- glm(StealShampoo ~ factor(Ideology) + Income + Age2016 + Female + Education + White + Black + Asian, data = data, family = binomial(link = "logit"))
+
+summary(model)
+
+pR2(model)['McFadden']
+
+```
+
+This model predicts that those who are the most liberal, wealthy, female, White, and older are most likely to have reported to have stole shampoo. For everyone 1 unit increase in the most liberal ideology, StealShampoo increases by 1.145. Maybe this makes sense, ultra-progressives are the most likely to hate big business; progressives may also be more likely to report StealingShampoo when asked. Furthermore, with every one unit increase in income status, StealShampoo increases by .089. Identifying as female increases your chance to StealShampoo by .584. This makes sense as from my own observation, women are more interested in beauty, skincare, makeup, etc. For every one unit increase in education level, StealShampoo increases by .18. Finally, being White increases StealShampoo by a staggering 1.13. 
+
+In sum, my mom is likely stealing a lot of shampoo.
+
+I do not believe this data is weighted, therefore, I am uncertain how accurate the model is. Furthermore, the McFadden R Square value is equivalent to .089, which is a value smaller than what McFadden deemed as great fit (.2 - .4).
+

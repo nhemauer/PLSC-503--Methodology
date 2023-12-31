@@ -1,0 +1,39 @@
+---
+title: "503 Hemauer Assignment 9"
+output: html_notebook
+---
+
+
+1. Ordinal Regression
+
+```{r}
+
+library(MASS)
+library(VGAM)
+
+data <- read.csv("https://raw.githubusercontent.com/PrisonRodeo/PLSC503-2023-git/main/Exercises/PLSC503-2023-ExerciseNine.csv")
+
+#Ordinal Regression
+
+ordinal <- polr(as.factor(BedSize) ~ Ideology + Education + Income + Age2016 + Female, data = data)
+summary(ordinal)
+
+```
+
+If I've read the regression correctly, ideology and Income are the most significant. Furthermore, age is negatively associated with bed-size. With every one unit increase in ideology (further conservatism), bed size increases by .06 points (larger bed). With every one unit increase in income, bed size increases by .16 points. For every 1 unit increase in age, bed size decreases in size by .008 (This is a very small coefficient, almost does not mean anything).
+
+
+2. Multinomial Response Logit
+
+```{r}
+
+#Multinomial Response Logit
+
+mLogit <- vglm(BedSize ~ Ideology + Education + Income + Age2016 + Female, data = data, multinomial(refLevel = 1))
+summary(mLogit)
+
+```
+
+In this situation, with this outcome variable, it would be best to use the ordinal model as the order of the outcome is ordinal not nominal (there is an ordered relationship between the variable). 
+
+In comparison to the ordinal response model detailed above, the multinomial logit model only shows significance for income. Specifically, using reference level 1 (twin bed), every unit of income is associated with a .20 and .29 increase in likelihood of owning a Queen or King bed respectively?

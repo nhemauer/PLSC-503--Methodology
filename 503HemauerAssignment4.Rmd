@@ -1,0 +1,244 @@
+---
+title: "503 Hemauer Assignment 4"
+output: html_notebook
+---
+
+Part 1
+
+https://www.statisticshowto.com/clustered-standard-errors/
+
+https://rdrr.io/rforge/fMultivar/man/bvdist-norm2d.html --- norm2d functions
+
+1.
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(MASS)
+library(plm)
+
+set.seed(1339)
+
+#.25 Correlation
+
+rho <- cbind(c(1, .25, 0), c(.25, 1, 0), c(0, 0, 1))
+
+mu <- c(0, 0, 0)
+
+mvrnorm <- mvrnorm(n = 10, mu, Sigma = rho, tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
+mvrnorm <- data.frame(mvrnorm)
+
+Y = rnorm(10) + (1 * mvrnorm$X1) + (2 * mvrnorm$X2) + (3 * mvrnorm$X3)
+
+fit1 <- lm(Y ~ mvrnorm$X1 + mvrnorm$X2 + mvrnorm$X3)
+
+#.5 Correlation
+
+rho <- cbind(c(1, .5, 0), c(.5, 1, 0), c(0, 0, 1))
+
+mu <- c(0, 0, 0)
+
+mvrnorm <- mvrnorm(n = 10, mu, Sigma = rho, tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
+mvrnorm <- data.frame(mvrnorm)
+
+Y = rnorm(10) + (1 * mvrnorm$X1) + (2 * mvrnorm$X2) + (3 * mvrnorm$X3)
+
+fit2 <- lm(Y ~ mvrnorm$X1 + mvrnorm$X2 + mvrnorm$X3)
+
+#.75 Correlation
+
+rho <- cbind(c(1, .75, 0), c(.75, 1, 0), c(0, 0, 1))
+
+mu <- c(0, 0, 0)
+
+mvrnorm <- mvrnorm(n = 10, mu, Sigma = rho, tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
+mvrnorm <- data.frame(mvrnorm)
+
+Y = rnorm(10) + (1 * mvrnorm$X1) + (2 * mvrnorm$X2) + (3 * mvrnorm$X3)
+
+fit3 <- lm(Y ~ mvrnorm$X1 + mvrnorm$X2 + mvrnorm$X3)
+
+summary(fit1)
+summary(fit2)
+summary(fit3)
+
+```
+
+As correlation between X1 and X2 increases, the standard error also increases among all correlations. 
+
+
+2.
+
+```{r}
+
+#100
+
+rho <- cbind(c(1, .25, 0), c(.25, 1, 0), c(0, 0, 1))
+
+mu <- c(0, 0, 0)
+
+mvrnorm <- mvrnorm(n = 100, mu, Sigma = rho, tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
+mvrnorm <- data.frame(mvrnorm)
+
+Y = rnorm(100) + (1 * mvrnorm$X1) + (2 * mvrnorm$X2) + (3 * mvrnorm$X3)
+
+fit1 <- lm(Y ~ mvrnorm$X1 + mvrnorm$X2 + mvrnorm$X3)
+
+#500
+
+rho <- cbind(c(1, .25, 0), c(.25, 1, 0), c(0, 0, 1))
+
+mu <- c(0, 0, 0)
+
+mvrnorm <- mvrnorm(n = 500, mu, Sigma = rho, tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
+mvrnorm <- data.frame(mvrnorm)
+
+Y = rnorm(500) + (1 * mvrnorm$X1) + (2 * mvrnorm$X2) + (3 * mvrnorm$X3)
+
+fit2 <- lm(Y ~ mvrnorm$X1 + mvrnorm$X2 + mvrnorm$X3)
+
+#10 thousand
+
+rho <- cbind(c(1, .25, 0), c(.25, 1, 0), c(0, 0, 1))
+
+mu <- c(0, 0, 0)
+
+mvrnorm <- mvrnorm(n = 10000, mu, Sigma = rho, tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
+mvrnorm <- data.frame(mvrnorm)
+
+Y = rnorm(10000) + (1 * mvrnorm$X1) + (2 * mvrnorm$X2) + (3 * mvrnorm$X3)
+
+fit3 <- lm(Y ~ mvrnorm$X1 + mvrnorm$X2 + mvrnorm$X3)
+
+#250 thousand
+
+rho <- cbind(c(1, .25, 0), c(.25, 1, 0), c(0, 0, 1))
+
+mu <- c(0, 0, 0)
+
+mvrnorm <- mvrnorm(n = 250000, mu, Sigma = rho, tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
+mvrnorm <- data.frame(mvrnorm)
+
+Y = rnorm(250000) + (1 * mvrnorm$X1) + (2 * mvrnorm$X2) + (3 * mvrnorm$X3)
+
+fit4 <- lm(Y ~ mvrnorm$X1 + mvrnorm$X2 + mvrnorm$X3)
+
+#1 mil
+
+rho <- cbind(c(1, .25, 0), c(.25, 1, 0), c(0, 0, 1))
+
+mu <- c(0, 0, 0)
+
+mvrnorm <- mvrnorm(n = 1000000, mu, Sigma = rho, tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
+mvrnorm <- data.frame(mvrnorm)
+
+Y = rnorm(1000000) + (1 * mvrnorm$X1) + (2 * mvrnorm$X2) + (3 * mvrnorm$X3)
+
+fit5 <- lm(Y ~ mvrnorm$X1 + mvrnorm$X2 + mvrnorm$X3)
+
+#5 mil
+
+rho <- cbind(c(1, .25, 0), c(.25, 1, 0), c(0, 0, 1))
+
+mu <- c(0, 0, 0)
+
+mvrnorm <- mvrnorm(n = 5000000, mu, Sigma = rho, tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
+mvrnorm <- data.frame(mvrnorm)
+
+Y = rnorm(5000000) + (1 * mvrnorm$X1) + (2 * mvrnorm$X2) + (3 * mvrnorm$X3)
+
+fit6 <- lm(Y ~ mvrnorm$X1 + mvrnorm$X2 + mvrnorm$X3)
+
+summary(fit1)
+summary(fit2)
+summary(fit3)
+summary(fit4)
+summary(fit5)
+summary(fit6)
+
+```
+
+As N approaches infinity, the SE gets closer and closer to zero.
+
+
+3.
+
+To my knowledge, there is no significant relationship between the standard errors of bhat 3 and the correlation of x1x2. The standard errors of bhat 3 grow smaller as the sample size increases. It may decrease more rapidly than the standard error of bhat 1.
+
+
+Part 2
+
+1.
+
+```{r}
+library(car)
+library(glmnet)
+
+data <- read.csv("https://raw.githubusercontent.com/PrisonRodeo/PLSC503-2023-git/main/Exercises/PLSC503-2023-ExerciseFour.csv")
+
+model <- lm(GovtExpenditures ~ MilitaryExpenditures + Inflation + TotalTrade + Unemployment + CO2Emissions + AgeDepRatioOld + LifeExpectancy + Population + PopGrowth + UrbanPopulation + LandArea + FertilityRate, data = data)
+
+summary(model)
+
+
+```
+
+2.
+
+In this model, there is likely multicollinearity among the predictor values. Substantively, we might expect there to be multicollinearity among the fertilityrate and popgrowth variables, as they both measure similar dimensions.
+
+```{r}
+
+vif(model) #One Way to Test for Multicollinearity
+
+```
+
+The results show that the multicollinearity in LifeExpectancy is likely to be cause for concern (7.59) as well as FertilityRate (8.05).
+
+
+3. 
+
+Because my vif values are not over 10, it would likely be best to leave the data as is. However, if I wanted, I could drop the LifeExpectancy or FertilityRate and check adjusted R^2 values to determine if that would be a successful approach. I could also run a ridge regression, seen below.
+
+```{r}
+
+omitData <- na.omit(data)
+
+y <- omitData$GovtExpenditures
+x <- data.matrix(omitData[, c('MilitaryExpenditures', 'Inflation', 'TotalTrade', 'Unemployment', 'CO2Emissions', 'AgeDepRatioOld', 'LifeExpectancy', 'Population', 'PopGrowth', 'UrbanPopulation', 'LandArea', 'FertilityRate')])
+
+model2 <- glmnet(x, y, alpha = 0)
+
+cv_model <- cv.glmnet(x, y, alpha = 0)
+
+
+
+
+#find optimal lambda value that minimizes test MSE
+best_lambda <- cv_model$lambda.min #The best is 2.923816
+
+#produce plot of test MSE by lambda value
+plot(cv_model) 
+
+best_model <- glmnet(x, y, alpha = 0, lambda = best_lambda)
+coef(best_model)
+
+plot(model2, xvar = "lambda")
+
+
+
+
+#use fitted best model to make predictions
+y_predicted <- predict(model2, s = best_lambda, newx = x)
+
+#find SST and SSE
+sst <- sum((y - mean(y))^2)
+sse <- sum((y_predicted - y)^2)
+
+#find R-Squared
+rsq <- 1 - sse/sst
+
+```
+
+
+I had to omit data... so I am not sure if I could use this analysis? But, the calculated rsquared increased from .1385 to .1890. So if I could use this, it would better predict the dependent variable.

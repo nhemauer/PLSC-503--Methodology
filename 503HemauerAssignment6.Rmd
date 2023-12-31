@@ -1,0 +1,546 @@
+---
+title: "503 Hemauer Assignment 6"
+output: html_notebook
+---
+
+Part 1
+
+1a. Calculating Equation 1 Data
+
+```{r}
+library(simpleboot)
+library(plyr)
+library(ggplot2)
+
+set.seed(1337)
+
+regOLS <- function(){
+  
+  n = 10
+
+  x <- rnorm(n, mean = 0, sd = 1)
+  y <- 1 + 2 * x + rnorm(n, mean = 0, sd = 1)
+
+#normal OLS
+
+  model1 <- lm(y ~ x)
+  summary <- data.frame(summary(model1)$coefficients)
+
+  olsB0 <- summary$Estimate[1]
+  olsB1 <- summary$Estimate[2]
+  olsCI <- confint(model1)
+
+#bootstrap OLS
+
+  simBoot1 <- lm.boot(model1, n)
+
+  simB0 <- perc(simBoot1, .50)[1]
+  simB1 <- perc(simBoot1, .50)[2]
+  simCI <- perc(simBoot1, p = c(.025, .975))
+
+
+  simDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  simDf$X1 <- simB0
+  simDf$X2 <- simB1
+  simDf$X3 <- simCI[1, 1]
+  simDf$X4 <- simCI[2, 1]
+  simDf$X5 <- simCI[1, 2]
+  simDf$X6 <- simCI[2, 2]
+
+
+  olsDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  olsDf$X1 <- olsB0
+  olsDf$X2 <- olsB1
+  olsDf$X3 <- olsCI[1, 1]
+  olsDf$X4 <- olsCI[2, 1]
+  olsDf$X5 <- olsCI[1, 2]
+  olsDf$X6 <- olsCI[2, 2]
+
+
+  finalDf <- rbind(olsDf, simDf)
+#odds are not bootstrapped, evens are bootstrapped
+
+return(finalDf)
+
+}
+
+fullDf <- rdply(100, regOLS())
+
+row_odd <- seq_len(nrow(fullDf)) %% 2 
+data_row_norm <- fullDf[row_odd == 1, ]
+data_row_bootstrapped <- fullDf[row_odd == 0, ]
+
+#average these rows to then plot
+graphDataNorm <- colMeans(data_row_norm[sapply(data_row_norm, is.numeric)], na.rm=TRUE)
+graphDataNormBoot <- colMeans(data_row_bootstrapped[sapply(data_row_bootstrapped, is.numeric)], na.rm=TRUE)
+
+
+#KEY
+ # simDf$X1 <- simB0
+ # simDf$X2 <- simB1
+ # simDf$X3 <- simCI[1, 1]
+ # simDf$X4 <- simCI[2, 1]
+ # simDf$X5 <- simCI[1, 2]
+ # simDf$X6 <- simCI[2, 2]
+
+```
+
+1b. Calculating Equation 2 Data
+
+```{r}
+
+skewOLS <- function(){
+  
+  n = 10
+
+  x <- rnorm(n, mean = 0, sd = 1)
+  ustar <- rgamma(n, shape = 0.2, scale = 1) * 6 # <- skewed u.s
+  y <- 2 + 2 * x + (ustar - mean(ustar))
+
+#normal Skew
+
+  model2 <- lm(y ~ x)
+  summary <- data.frame(summary(model2)$coefficients)
+
+  olsB0 <- summary$Estimate[1]
+  olsB1 <- summary$Estimate[2]
+  olsCI <- confint(model2)
+
+#bootstrap Skew
+
+  simBoot2 <- lm.boot(model2, n)
+
+  simB0 <- perc(simBoot2, .50)[1]
+  simB1 <- perc(simBoot2, .50)[2]
+  simCI <- perc(simBoot2, p = c(.025, .975))
+
+
+  simDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  simDf$X1 <- simB0
+  simDf$X2 <- simB1
+  simDf$X3 <- simCI[1, 1]
+  simDf$X4 <- simCI[2, 1]
+  simDf$X5 <- simCI[1, 2]
+  simDf$X6 <- simCI[2, 2]
+
+
+  olsDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  olsDf$X1 <- olsB0
+  olsDf$X2 <- olsB1
+  olsDf$X3 <- olsCI[1, 1]
+  olsDf$X4 <- olsCI[2, 1]
+  olsDf$X5 <- olsCI[1, 2]
+  olsDf$X6 <- olsCI[2, 2]
+
+
+  finalDf <- rbind(olsDf, simDf)
+#odds are not bootstrapped, evens are bootstrapped
+
+return(finalDf)
+
+}
+
+fullDf <- rdply(100, skewOLS())
+
+row_odd <- seq_len(nrow(fullDf)) %% 2 
+data_row_norm <- fullDf[row_odd == 1, ]
+data_row_bootstrapped <- fullDf[row_odd == 0, ]
+
+#average these rows to then plot
+graphDataSkew <- colMeans(data_row_norm[sapply(data_row_norm, is.numeric)], na.rm=TRUE)
+graphDataSkewBoot <- colMeans(data_row_bootstrapped[sapply(data_row_bootstrapped, is.numeric)], na.rm=TRUE)
+
+#KEY
+ # simDf$X1 <- simB0
+ # simDf$X2 <- simB1
+ # simDf$X3 <- simCI[1, 1]
+ # simDf$X4 <- simCI[2, 1]
+ # simDf$X5 <- simCI[1, 2]
+ # simDf$X6 <- simCI[2, 2]
+```
+
+1c. Calculating Equation 3 Data
+
+```{r}
+
+N <- 10
+
+autoSkew <- function() {
+
+  x <- rnorm(N)
+  a <- arima.sim(list(order = c(0, 1, 0)), n = 9)
+  b <- rnorm(N)
+  y <- a + b
+
+  model3 <- lm(y ~ x)
+  summary <- data.frame(summary(model3)$coefficients)
+
+  olsB0 <- summary$Estimate[1]
+  olsB1 <- summary$Estimate[2]
+  olsCI <- confint(model3)
+
+
+  simBoot3 <- lm.boot(model3, N)
+
+  simB0 <- perc(simBoot3, .50)[1]
+  simB1 <- perc(simBoot3, .50)[2]
+  simCI <- perc(simBoot3, p = c(.025, .975))
+
+
+  simDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  simDf$X1 <- simB0
+  simDf$X2 <- simB1
+  simDf$X3 <- simCI[1, 1]
+  simDf$X4 <- simCI[2, 1]
+  simDf$X5 <- simCI[1, 2]
+  simDf$X6 <- simCI[2, 2]
+
+
+  olsDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  olsDf$X1 <- olsB0
+  olsDf$X2 <- olsB1
+  olsDf$X3 <- olsCI[1, 1]
+  olsDf$X4 <- olsCI[2, 1]
+  olsDf$X5 <- olsCI[1, 2]
+  olsDf$X6 <- olsCI[2, 2]
+
+
+  finalDf <- rbind(olsDf, simDf)
+#odds are not bootstrapped, evens are bootstrapped
+
+return(finalDf)
+
+}
+
+fullDf <- rdply(100, autoSkew())
+
+row_odd <- seq_len(nrow(fullDf)) %% 2 
+data_row_norm <- fullDf[row_odd == 1, ]
+data_row_bootstrapped <- fullDf[row_odd == 0, ]
+
+#average these rows to then plot
+graphDataAuto <- colMeans(data_row_norm[sapply(data_row_norm, is.numeric)], na.rm=TRUE)
+graphDataAutoBoot <- colMeans(data_row_bootstrapped[sapply(data_row_bootstrapped, is.numeric)], na.rm=TRUE)
+
+#KEY
+ # simDf$X1 <- simB0
+ # simDf$X2 <- simB1
+ # simDf$X3 <- simCI[1, 1]
+ # simDf$X4 <- simCI[2, 1]
+ # simDf$X5 <- simCI[1, 2]
+ # simDf$X6 <- simCI[2, 2]
+```
+
+1d. Plotting the N = 10
+
+```{r}
+
+ggplotRegression <- function (fit) {
+
+ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  labs(title = paste("Adj R2 = ",signif(summary(fit)$adj.r.squared, 5),
+                     "Intercept =",signif(fit$coef[[1]],5 ),
+                     " Slope =",signif(fit$coef[[2]], 5),
+                     " P =",signif(summary(fit)$coef[2,4], 5)))
+}
+
+ggplotRegression(model1)
+plot(simBoot)
+
+ggplotRegression(model2)
+plot(simBoot2)
+
+ggplotRegression(model3)
+plot(simBoot3)
+
+```
+
+According to my dataset, the bootstrap is quite accurate in predicting the first normal equation. However, the biased and autocorrelated equation bootstraps perform much worse. The confidence intervals are much larger, but the estimates remain quite accurate.
+
+
+2a. Calculating Equation 1 Data (n = 100) 
+
+```{r}
+
+regOLS <- function(){
+  
+  n = 100
+
+  x <- rnorm(n, mean = 0, sd = 1)
+  y <- 1 + 2*x + rnorm(n, mean = 0, sd = 1)
+
+#normal OLS
+
+  model1 <- lm(y ~ x)
+  summary <- data.frame(summary(model1)$coefficients)
+
+  olsB0 <- summary$Estimate[1]
+  olsB1 <- summary$Estimate[2]
+  olsCI <- confint(model1)
+
+#bootstrap OLS
+
+  simBoot1 <- lm.boot(model1, n)
+
+  simB0 <- perc(simBoot1, .50)[1]
+  simB1 <- perc(simBoot1, .50)[2]
+  simCI <- perc(simBoot1, p = c(.025, .975))
+
+
+  simDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  simDf$X1 <- simB0
+  simDf$X2 <- simB1
+  simDf$X3 <- simCI[1, 1]
+  simDf$X4 <- simCI[2, 1]
+  simDf$X5 <- simCI[1, 2]
+  simDf$X6 <- simCI[2, 2]
+
+
+  olsDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  olsDf$X1 <- olsB0
+  olsDf$X2 <- olsB1
+  olsDf$X3 <- olsCI[1, 1]
+  olsDf$X4 <- olsCI[2, 1]
+  olsDf$X5 <- olsCI[1, 2]
+  olsDf$X6 <- olsCI[2, 2]
+
+
+  finalDf <- rbind(olsDf, simDf)
+#odds are not bootstrapped, evens are bootstrapped
+
+return(finalDf)
+
+}
+
+fullDf <- rdply(100, regOLS())
+
+row_odd <- seq_len(nrow(fullDf)) %% 2 
+data_row_norm <- fullDf[row_odd == 1, ]
+data_row_bootstrapped <- fullDf[row_odd == 0, ]
+
+#average these rows to then plot
+graphDataNorm <- colMeans(data_row_norm[sapply(data_row_norm, is.numeric)], na.rm=TRUE)
+graphDataNormBoot <- colMeans(data_row_bootstrapped[sapply(data_row_bootstrapped, is.numeric)], na.rm=TRUE)
+
+
+#KEY
+ # simDf$X1 <- simB0
+ # simDf$X2 <- simB1
+ # simDf$X3 <- simCI[1, 1]
+ # simDf$X4 <- simCI[2, 1]
+ # simDf$X5 <- simCI[1, 2]
+ # simDf$X6 <- simCI[2, 2]
+
+```
+
+2b. Calculating Equation 2 Data (n = 100) 
+
+```{r}
+
+skewOLS <- function(){
+  
+  n = 100
+
+  x <- rnorm(n, mean = 0, sd = 1)
+  ustar <- rgamma(n, shape = 0.2, scale = 1) * 6 # <- skewed u.s
+  y <- 2 + 2 * x + (ustar - mean(ustar))
+
+#normal Skew
+
+  model2 <- lm(y ~ x)
+  summary <- data.frame(summary(model2)$coefficients)
+
+  olsB0 <- summary$Estimate[1]
+  olsB1 <- summary$Estimate[2]
+  olsCI <- confint(model2)
+
+#bootstrap Skew
+
+  simBoot2 <- lm.boot(model2, n)
+
+  simB0 <- perc(simBoot2, .50)[1]
+  simB1 <- perc(simBoot2, .50)[2]
+  simCI <- perc(simBoot2, p = c(.025, .975))
+
+
+  simDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  simDf$X1 <- simB0
+  simDf$X2 <- simB1
+  simDf$X3 <- simCI[1, 1]
+  simDf$X4 <- simCI[2, 1]
+  simDf$X5 <- simCI[1, 2]
+  simDf$X6 <- simCI[2, 2]
+
+
+  olsDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  olsDf$X1 <- olsB0
+  olsDf$X2 <- olsB1
+  olsDf$X3 <- olsCI[1, 1]
+  olsDf$X4 <- olsCI[2, 1]
+  olsDf$X5 <- olsCI[1, 2]
+  olsDf$X6 <- olsCI[2, 2]
+
+
+  finalDf <- rbind(olsDf, simDf)
+#odds are not bootstrapped, evens are bootstrapped
+
+return(finalDf)
+
+}
+
+fullDf <- rdply(100, skewOLS())
+
+row_odd <- seq_len(nrow(fullDf)) %% 2 
+data_row_norm <- fullDf[row_odd == 1, ]
+data_row_bootstrapped <- fullDf[row_odd == 0, ]
+
+#average these rows to then plot
+graphDataSkew <- colMeans(data_row_norm[sapply(data_row_norm, is.numeric)], na.rm=TRUE)
+graphDataSkewBoot <- colMeans(data_row_bootstrapped[sapply(data_row_bootstrapped, is.numeric)], na.rm=TRUE)
+
+#KEY
+ # simDf$X1 <- simB0
+ # simDf$X2 <- simB1
+ # simDf$X3 <- simCI[1, 1]
+ # simDf$X4 <- simCI[2, 1]
+ # simDf$X5 <- simCI[1, 2]
+ # simDf$X6 <- simCI[2, 2]
+
+
+
+```
+
+2c. Calculating Equation 3 Data (n = 100) 
+
+```{r}
+
+N <- 100
+
+autoSkew <- function() {
+
+  x <- rnorm(N)
+  a <- arima.sim(list(order = c(0, 1, 0)), n = 99)
+  b <- rnorm(N)
+  y <- a + b
+
+  model3 <- lm(y ~ x)
+  summary <- data.frame(summary(model3)$coefficients)
+
+  olsB0 <- summary$Estimate[1]
+  olsB1 <- summary$Estimate[2]
+  olsCI <- confint(model3)
+
+
+  simBoot3 <- lm.boot(model3, N)
+
+  simB0 <- perc(simBoot3, .50)[1]
+  simB1 <- perc(simBoot3, .50)[2]
+  simCI <- perc(simBoot3, p = c(.025, .975))
+
+
+  simDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  simDf$X1 <- simB0
+  simDf$X2 <- simB1
+  simDf$X3 <- simCI[1, 1]
+  simDf$X4 <- simCI[2, 1]
+  simDf$X5 <- simCI[1, 2]
+  simDf$X6 <- simCI[2, 2]
+
+
+  olsDf <- data.frame((matrix(nrow = 1, ncol = 6)))
+
+  olsDf$X1 <- olsB0
+  olsDf$X2 <- olsB1
+  olsDf$X3 <- olsCI[1, 1]
+  olsDf$X4 <- olsCI[2, 1]
+  olsDf$X5 <- olsCI[1, 2]
+  olsDf$X6 <- olsCI[2, 2]
+
+
+  finalDf <- rbind(olsDf, simDf)
+#odds are not bootstrapped, evens are bootstrapped
+
+return(finalDf)
+
+}
+
+fullDf <- rdply(100, autoSkew())
+
+row_odd <- seq_len(nrow(fullDf)) %% 2 
+data_row_norm <- fullDf[row_odd == 1, ]
+data_row_bootstrapped <- fullDf[row_odd == 0, ]
+
+#average these rows to then plot
+graphDataAuto <- colMeans(data_row_norm[sapply(data_row_norm, is.numeric)], na.rm=TRUE)
+graphDataAutoBoot <- colMeans(data_row_bootstrapped[sapply(data_row_bootstrapped, is.numeric)], na.rm=TRUE)
+
+#KEY
+ # simDf$X1 <- simB0
+ # simDf$X2 <- simB1
+ # simDf$X3 <- simCI[1, 1]
+ # simDf$X4 <- simCI[2, 1]
+ # simDf$X5 <- simCI[1, 2]
+ # simDf$X6 <- simCI[2, 2]
+
+```
+
+2d. Plotting the N = 100
+
+```{r}
+
+ggplotRegression <- function (fit) {
+
+ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  labs(title = paste("Adj R2 = ",signif(summary(fit)$adj.r.squared, 5),
+                     "Intercept =",signif(fit$coef[[1]],5 ),
+                     " Slope =",signif(fit$coef[[2]], 5),
+                     " P =",signif(summary(fit)$coef[2,4], 5)))
+}
+
+ggplotRegression(model1)
+plot(simBoot)
+
+ggplotRegression(model2)
+plot(simBoot2)
+
+ggplotRegression(model3)
+plot(simBoot3)
+
+```
+
+As sample size increases, the plots become more accurate. According to my dataset, the bootstraps for the third and second equation continue to be much worse than the first equation.
+
+
+Part 2
+
+1.
+
+```{r}
+
+dataCSV <- read.csv("https://raw.githubusercontent.com/PrisonRodeo/PLSC503-2023-git/main/Exercises/PLSC503-2023-ExerciseSix.csv")
+
+intModel <- lm(Cases ~ Trade + TradeBalance + Centralization + Centralization:Trade, data = dataCSV)
+
+summary(intModel)
+
+```
+The interactive OLS model detailed above substantially means that trade and trade balance are the most statistically significant in predicting ECJ cases. Furthermore, to a lesser extent, centralization of the government predicts how many ECJ cases are filed. Finally, the interaction between trade and centralization substantially means that centralization positively affects case numbers per unit increase in trade. In other words, the interaction effect is the difference in the effect of centralization on case numbers between countries who differ in their trade by 1 unit. 
+
+Statistically, for each one unit increase in trade, cases are increased by .53 + .13(centralization). For every one unit increase in trade balance, cases increase by 1.05. For each one unit increase in centralization, cases decrease by -3.91 + .13(trade).
+
+Im unsure what uncertainty (if any) is associated with these findings.

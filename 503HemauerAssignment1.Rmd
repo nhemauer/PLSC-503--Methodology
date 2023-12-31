@@ -1,0 +1,177 @@
+---
+title: "503 Hemauer Assignment 1"
+output: html_notebook
+---
+
+
+1. BHat and Covariance/Variance
+
+https://www.cuemath.com/algebra/covariance-matrix/
+
+https://thetarzan.wordpress.com/2011/06/13/calculate-ols-regression-manually-using-matrix-algebra-in-r/
+
+```{r}
+
+library(matlib)
+library(MASS)
+
+y <- c(39, -18, 13, 19, 6, -2, 15, -11, 17, 3)
+x0 <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+x1 <- c(.3, .1, .7, 1.1, 0, .1, 1.5, 0, .9, .2)
+x2 <- c(8, 111, 79, 13, 91, 43, 52, 98, 22, 106)
+x3 <- c(0, 1, 1, 1, 0, 1, 0, 1, 0, 1)
+x4 <- c(13229, 7188, 8404, 8109, 10066, 9003, 14014, 10999, 12876, 7977)
+
+xdata <- cbind(x0, x1, x2, x3, x4)
+xdata2 <- cbind(x1, x2, x3, x4)
+alldata <- cbind(y, x0, x1, x2, x3, x4)
+
+y=as.matrix(y)
+x=as.matrix(xdata)
+
+xt <- t(x)
+xtx <- xt %*% x
+xtxinv <- solve(xtx)
+xty <- xt %*% y
+
+bhat <- xtxinv %*% xty
+#bhat <- formatC(bhat, format = "f", digits = 12)
+
+
+yt <- t(y)
+
+yty <- yt %*% y
+
+e = y - (xdata %*% bhat) #do we use xdata or xdata2?
+et = t(e)
+sse = et %*% e
+
+#ssefromlm = sum((fitted(model1) - y)^2)
+
+mse = sse/(nrow(xdata) - ncol(xdata))
+
+vcovmat = mse %*% as.vector(xtxinv)
+
+
+model1 = lm(formula = y ~ x1 + x2 + x3 + x4)
+vcov=vcov(model1)
+
+
+```
+
+
+2. Calculate YHat and Residuals
+
+```{r}
+
+yhat <- (2.801416 * x1) + (-.265163 * x2) + (-13.11548 * x3) + (-.000970 * x4) + 40.996906
+
+
+u <- y - (xdata %*% as.vector(bhat)) #Residuals
+
+```
+
+
+3. Calculate RMSE, R^2, and R^2Adj
+
+RMSE = mean((observeds - predicteds)^2) %>% sqrt()
+http://www.sthda.com/english/articles/40-regression-analysis/165-linear-regression-essentials-in-r/#:~:text=Root%20Mean%20Squared%20Error%2C%20which,RMSE%2C%20the%20better%20the%20model.
+
+https://www.r-bloggers.com/2021/11/how-to-plot-observed-and-predicted-values-in-r/
+
+
+```{r}
+
+ybar <- mean(y)
+
+RMSD <- sqrt(sum((yhat - y) ^ 2 / 10))        # Σᵢ (ŷᵢ — yᵢ)² / 
+
+SST <- sum((y - ybar) ^ 2)
+
+rSquared <- 1 - (sse / SST)
+
+rSquaredAdjusted <- 1 - ((1 - rSquared) * (10 - 1) / (10 - rSquared))
+
+```
+
+
+4. Calculate the Standard Errors of the Estimated BHats as well as the Covariances
+
+```{r}
+vcovmat = mse %*% as.vector(xtxinv)
+
+fourxfour <- as.matrix(vcovmat, nrow = 4, ncol = 4)
+
+
+model1 = lm(formula = y ~ x1 + x2 + x3 + x4)
+vcov=vcov(model1)
+
+vStdErr <- sqrt(diag(vcov)) 
+
+#standard errors are often calculated taking square root of diagonal of covariance matrix
+
+#I didnt use my fourxfour here, but instead the identical matrix from the vcov() function 
+#My data would not stay in the matrix I calculated
+
+```
+
+5. t-test for hypothesis that b2 = 0
+
+```{r}
+
+ttest <- 0 / vStdErr[3]
+
+ttest2 <- -1.8880009 / vStdErr[3] #t test is b coefficient / SE of b coefficient
+
+```
+
+6. F-test for the joint hypothesis that b1 = b2 = b3 = 0
+https://www.statisticshowto.com/probability-and-statistics/hypothesis-testing/f-test/
+
+```{r}
+
+z = as.matrix(x4)
+
+zt <- t(z)
+ztz <- zt %*% z
+ztzinv <- solve(ztz)
+zty <- zt %*% y
+
+zhat <- ztzinv %*% zty
+
+
+restrictu <- y - (x4 * as.vector(zhat))
+
+restricted <- sum((-.000970 * x4) + 40.996906 + sum(restrictu)) ^ 2
+
+unrestricted <- sum((2.801416 * x1) + (-.265163 * x2) + (-13.11548 * x3) + (-.000970 * x4) + 40.996906 + sum(u)) ^ 2
+  
+fstat <- ((restricted - unrestricted) / 9) / (unrestricted / 10 - 4)
+
+```
+
+7. b1 = -10 x b2
+
+```{r}
+
+z = as.matrix(x2, x3, x4)
+
+
+zt <- t(z)
+ztz <- zt %*% z
+ztzinv <- solve(ztz)
+zty <- zt %*% y
+
+zhat <- ztzinv %*% zty
+
+
+restrictu <- y - (z * as.vector(zhat))
+
+restricted <- sum((-10 * -.265163 * x1) + (-.265163 * x2) + (-13.11548 * x3) + (-.000970 * x4) + 40.996906 + sum(restrictu)) ^ 2
+
+unrestricted <- sum((2.801416 * x1) + (-.265163 * x2) + (-13.11548 * x3) + (-.000970 * x4) + 40.996906 + sum(u)) ^ 2
+  
+fstat2 <- ((restricted - unrestricted) / 9) / (unrestricted / 10 - 4)
+
+```
+

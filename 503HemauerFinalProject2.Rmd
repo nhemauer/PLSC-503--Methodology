@@ -1,0 +1,24 @@
+---
+title: "503 Hemauer Final Project(2)"
+output: html_notebook
+---
+
+Final Proposal Analysis
+
+```{r}
+library(haven)
+
+finalData <- read_sav("C:/Users/ndhem/Downloads/w4inhome_dvn.sav")
+
+#H4GH2 == Past 30 Days, how often did a health problem cause you to a miss day of school or work
+#H4DA27 == How often do you vote in local or statewide elections
+#H4DA28 == What party
+
+#Controls
+#H4OD1Y == Birth Year
+#H4OD4 == Born a Citizen
+#H4ED2 == Highest Level of Education
+#H4EC1 == Household Income
+
+
+```

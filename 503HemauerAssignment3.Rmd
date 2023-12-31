@@ -1,0 +1,107 @@
+---
+title: "503 Hemauer Assignment 3"
+output: html_notebook
+---
+
+Information on linearity and methods of transforming
+
+https://stattrek.com/regression/linear-transformation
+
+
+Part 1:
+
+1. 
+
+D is a binary variable and the variances are equal to zero. Substituting for D, the second equation can be written:
+
+Yi = γ0 + γ1I(P > 0.5) + ei
+
+Then:
+
+Yi = y0 + ei
+
+The first equation can be written like this:
+
+Yi = β0 + β1[Pϕ0 + (1 − P)ϕ1] + ui
+
+By inserting 0 and 1 respectively for ϕ0 and ϕ1, the equation is simplified to:
+
+Yi = β0 + β1P + ui - β1P
+
+Then:
+
+Yi = β0 + ui
+
+This is the same as the first equation, therefore the estimates from 1 and 2 are equal.
+
+
+2. 
+
+For P = .5, symmetrically increasing variance from .000001 to 1 would cause the two densities to become more spread out, pushing X further away from the mean. Therefore, the X and Y relationship would weaken, creating larger standard errors, reducing the precision of the coefficient estimates.
+
+The model with β1 will become less statistically significant as a continuous variable and γ1 would not change much because it uses a binary variable (acting as a comparison).
+
+
+3.
+
+As P moves from 0 to 1, the estimate of γ1 will also change. As X becomes more like ϕ1, the estimate of γ1 will increase, due to the stronger relationship between D and Y. The standard error of γ1 will increase as the noise introduced by ϕ1 becomes more relevant to the equation.
+
+
+Part 2:
+
+```{r}
+
+library(sjmisc)
+library(jtools)
+
+data <- read.csv("https://raw.githubusercontent.com/PrisonRodeo/PLSC503-2023-git/main/Exercises/PLSC503-2023-ExerciseThree.csv")
+
+model1 <- lm(CO2Emissions ~ MilitaryExpenditures + PopDensity + GDPPerCapita + FertilityRate + FemalePctLegis + FemalePopPct, data = data)
+summary(model1)
+
+resid <- resid(model1)
+plot(data$MilitaryExpenditures[1:148], resid,
+       ylab = "Residuals", xlab = "Military Expenditures",
+       main = "CO2 Emissions")
+abline(0, 0) #The Horizon
+
+plot(data$FemalePopPct[1:148], resid,
+       ylab = "Residuals", xlab = "Female Population Percentage",
+       main = "CO2 Emissions")
+abline(0, 0) #The Horizon
+
+effect_plot(model1, pred = FemalePopPct, interval = TRUE, plot.points = TRUE)
+
+```
+In substantive terms, this regression provides evidence that C02 emissions are significantly driven by a country's GDP per capita, fertility rate, and female population percentage. Furthermore, to a lesser extent, military expenditures and population density also drive a country's CO2 emissions. Interestingly, female population percentage is highly significant, but higher female percentage in the country's legislature does not produce lower levels of C02 emissions. I am especially surprised that military expenditures do not correlate with C02 emissions as strongly as other variables. 
+
+For every one unit increase in military expenditures, CO2 emissions increase by 5.524e-01. For population density, every one unit increase in population density, CO2 emissions decrease by -6.011e-04. Every unit of GDP per capita increases CO2 emissions by 1.030e-04. Every unit increase of fertility rate and female population percentage coincides with a decrease in CO2 emissions by -1.152 and -6.365e-01 respectively. 
+
+After plotting military expenditure residuals, it is clear that the variable is linear, and it would be unnecessary to transform the data to increase linearity. The same result was found with the female population percentage variable. 
+
+However, if military expenditure residuals followed a logarithmic model, I would do the following:
+
+```{r}
+
+model2 <- lm(CO2Emissions ~ log(MilitaryExpenditures) + PopDensity + GDPPerCapita + FertilityRate + FemalePctLegis + FemalePopPct, data = data)
+summary(model2)
+
+```
+
+For all intensive purposes, this transformation does not effect the adjusted R-squared, and as a result, I would not use this data transformation as the data is linear not logarithmic.
+
+
+Dichotomizing FemalePopPct:
+
+Article on dichotomizing continuous variables 
+https://pubmed.ncbi.nlm.nih.gov/16217841/
+
+```{r}
+
+data$dicho <- dicho(data$FemalePopPct, dich.by = 50)
+
+model3 <- lm(CO2Emissions ~ MilitaryExpenditures + PopDensity + GDPPerCapita + FertilityRate + FemalePctLegis + dicho, data = data)
+summary(model3)
+
+```
+After re-estimating my model with a dichotomous predictor for FemalePopPct, my regression no longer supports significance for the effect of female population on CO2 emissions. Therefore, dichotomizing this variable creates a false negative. Dichotomizing also drastically lowers the adjusted R-squared value. 

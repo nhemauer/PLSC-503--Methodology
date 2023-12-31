@@ -1,0 +1,409 @@
+---
+title: "503 Hemauer Assignment 5"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+Part 1
+
+1.
+
+```{r}
+
+library(MASS)
+library(sem)
+library(car)
+library(broom)
+library(plyr)
+library(AER)
+
+seed <- 1337
+set.seed(seed)
+n = 50
+
+RegFunction <- function(){
+  
+  #Data Generation
+
+  mu <-c(0, 0, 0) # <== X, Z, U
+  Sigma <- matrix(c(1, 0.8, 0.4, 0.8, 1, 0, 0.4, 0, 1),
+  nrow = 3, byrow = TRUE) # Cor(X,Y)=0.8, etc.
+  Vars <- mvrnorm(500, mu, Sigma)
+  colnames(Vars) <- c("X", "Z", "U")
+  Vars <- data.frame(Vars)
+  Vars$Y <- 1 + Vars$X + Vars$U
+  
+  #OLS Regression
+  
+  OLS <- lm(Y ~ X, data = Vars)
+  OLS <- tidy(OLS)
+  
+  TSLS <- tsls(Y ~ I(X), data = Vars, instruments = ~Z)
+  se <- sqrt(diag(vcov(TSLS)))
+  
+  df <- data.frame(matrix(ncol = 3, nrow = 1))
+  colnames(df) <- c("term", "estimate", "std.error")
+  df$term <- "xTSLS"
+  df$std.error <- se[2]
+  df$estimate <- TSLS[["coefficients"]][["I(X)"]]
+  
+  df2 <- OLS[2, c(1:3)]
+  
+  Final <- rbind(df2, df)
+
+return(Final)
+  
+}
+
+FinalData <- rdply(n, RegFunction())
+
+```
+
+2. Correlation Between X and Z Varying from .8, .6, .4, .2
+
+```{r}
+
+#.6 Correlation Between X and Z
+
+RegFunction6 <- function(){
+  
+  #Data Generation
+
+  mu <-c(0, 0, 0) # <== X, Z, U
+  Sigma <- matrix(c(1, 0.6, 0.4, 0.6, 1, 0, 0.4, 0, 1),
+  nrow = 3, byrow = TRUE) # Cor(X,Y)=0.8, etc.
+  Vars <- mvrnorm(500, mu, Sigma)
+  colnames(Vars) <- c("X", "Z", "U")
+  Vars <- data.frame(Vars)
+  Vars$Y <- 1 + Vars$X + Vars$U
+  
+  #OLS Regression
+  
+  OLS <- lm(Y ~ X, data = Vars)
+  OLS <- tidy(OLS)
+  
+  TSLS <- tsls(Y ~ I(X), data = Vars, instruments = ~Z)
+  se <- sqrt(diag(vcov(TSLS)))
+  
+  df <- data.frame(matrix(ncol = 3, nrow = 1))
+  colnames(df) <- c("term", "estimate", "std.error")
+  df$term <- "xTSLS"
+  df$std.error <- se[2]
+  df$estimate <- TSLS[["coefficients"]][["I(X)"]]
+  
+  df2 <- OLS[2, c(1:3)]
+  
+  Final <- rbind(df2, df)
+
+return(Final)
+  
+}
+
+FinalData2 <- rdply(n, RegFunction6())
+
+
+
+#.4 Correlation Between X and Z
+
+RegFunction4 <- function(){
+  
+  #Data Generation
+
+  mu <-c(0, 0, 0) # <== X, Z, U
+  Sigma <- matrix(c(1, 0.4, 0.4, 0.4, 1, 0, 0.4, 0, 1),
+  nrow = 3, byrow = TRUE) # Cor(X,Y)=0.8, etc.
+  Vars <- mvrnorm(500, mu, Sigma)
+  colnames(Vars) <- c("X", "Z", "U")
+  Vars <- data.frame(Vars)
+  Vars$Y <- 1 + Vars$X + Vars$U
+  
+  #OLS Regression
+  
+  OLS <- lm(Y ~ X, data = Vars)
+  OLS <- tidy(OLS)
+  
+  TSLS <- tsls(Y ~ I(X), data = Vars, instruments = ~Z)
+  se <- sqrt(diag(vcov(TSLS)))
+  
+  df <- data.frame(matrix(ncol = 3, nrow = 1))
+  colnames(df) <- c("term", "estimate", "std.error")
+  df$term <- "xTSLS"
+  df$std.error <- se[2]
+  df$estimate <- TSLS[["coefficients"]][["I(X)"]]
+  
+  df2 <- OLS[2, c(1:3)]
+  
+  Final <- rbind(df2, df)
+
+return(Final)
+  
+}
+
+FinalData3 <- rdply(n, RegFunction4())
+
+
+
+#.2 Correlation Between X and Z
+
+RegFunction2 <- function(){
+  
+  #Data Generation
+
+  mu <-c(0, 0, 0) # <== X, Z, U
+  Sigma <- matrix(c(1, 0.2, 0.4, 0.2, 1, 0, 0.4, 0, 1),
+  nrow = 3, byrow = TRUE) # Cor(X,Y)=0.8, etc.
+  Vars <- mvrnorm(500, mu, Sigma)
+  colnames(Vars) <- c("X", "Z", "U")
+  Vars <- data.frame(Vars)
+  Vars$Y <- 1 + Vars$X + Vars$U
+  
+  #OLS Regression
+  
+  OLS <- lm(Y ~ X, data = Vars)
+  OLS <- tidy(OLS)
+  
+  TSLS <- tsls(Y ~ I(X), data = Vars, instruments = ~Z)
+  se <- sqrt(diag(vcov(TSLS)))
+  
+  df <- data.frame(matrix(ncol = 3, nrow = 1))
+  colnames(df) <- c("term", "estimate", "std.error")
+  df$term <- "xTSLS"
+  df$std.error <- se[2]
+  df$estimate <- TSLS[["coefficients"]][["I(X)"]]
+  
+  df2 <- OLS[2, c(1:3)]
+  
+  Final <- rbind(df2, df)
+
+return(Final)
+  
+}
+
+FinalData4 <- rdply(n, RegFunction2())
+
+list(FinalData, FinalData2, FinalData3, FinalData4)
+```
+
+As correlation between the X and Z (the instrument), the TSLS estimates become less accurate when compared to the lm function results. Furthermore, the std.errors increase drastically, as there is more uncertainty if the estimate is correct. Therefore, as the association is varied from .8 to 0, the instrument becomes increasingly useless in predicting the variable.
+
+3.
+
+```{r}
+
+#.2 Correlation Between Z and U
+
+RegFunction22 <- function(){
+  
+  #Data Generation
+
+  mu <-c(0, 0, 0) # <== X, Z, U
+  Sigma <- matrix(c(1, 0.8, 0.4, 0.8, 1, .2, 0.4, .2, 1),
+  nrow = 3, byrow = TRUE) # Cor(X,Y)=0.8, etc.
+  Vars <- mvrnorm(500, mu, Sigma)
+  colnames(Vars) <- c("X", "Z", "U")
+  Vars <- data.frame(Vars)
+  Vars$Y <- 1 + Vars$X + Vars$U
+  
+  #OLS Regression
+  
+  OLS <- lm(Y ~ X, data = Vars)
+  OLS <- tidy(OLS)
+  
+  TSLS <- tsls(Y ~ I(X), data = Vars, instruments = ~Z)
+  se <- sqrt(diag(vcov(TSLS)))
+  
+  df <- data.frame(matrix(ncol = 3, nrow = 1))
+  colnames(df) <- c("term", "estimate", "std.error")
+  df$term <- "xTSLS"
+  df$std.error <- se[2]
+  df$estimate <- TSLS[["coefficients"]][["I(X)"]]
+  
+  df2 <- OLS[2, c(1:3)]
+  
+  Final <- rbind(df2, df)
+
+return(Final)
+  
+}
+
+FinalData5 <- rdply(n, RegFunction22())
+
+
+
+#.4 Correlation Between Z and U
+
+RegFunction24 <- function(){
+  
+  #Data Generation
+
+  mu <-c(0, 0, 0) # <== X, Z, U
+  Sigma <- matrix(c(1, 0.8, 0.4, 0.8, 1, .4, 0.4, .4, 1),
+  nrow = 3, byrow = TRUE) # Cor(X,Y)=0.8, etc.
+  Vars <- mvrnorm(500, mu, Sigma)
+  colnames(Vars) <- c("X", "Z", "U")
+  Vars <- data.frame(Vars)
+  Vars$Y <- 1 + Vars$X + Vars$U
+  
+  #OLS Regression
+  
+  OLS <- lm(Y ~ X, data = Vars)
+  OLS <- tidy(OLS)
+  
+  TSLS <- tsls(Y ~ I(X), data = Vars, instruments = ~Z)
+  se <- sqrt(diag(vcov(TSLS)))
+  
+  df <- data.frame(matrix(ncol = 3, nrow = 1))
+  colnames(df) <- c("term", "estimate", "std.error")
+  df$term <- "xTSLS"
+  df$std.error <- se[2]
+  df$estimate <- TSLS[["coefficients"]][["I(X)"]]
+  
+  df2 <- OLS[2, c(1:3)]
+  
+  Final <- rbind(df2, df)
+
+return(Final)
+  
+}
+
+FinalData6 <- rdply(n, RegFunction24())
+
+#.6 Correlation Between Z and U
+
+RegFunction26 <- function(){
+  
+  #Data Generation
+
+  mu <-c(0, 0, 0) # <== X, Z, U
+  Sigma <- matrix(c(1, 0.8, 0.4, 0.8, 1, .6, 0.4, .6, 1),
+  nrow = 3, byrow = TRUE) # Cor(X,Y)=0.8, etc.
+  Vars <- mvrnorm(500, mu, Sigma)
+  colnames(Vars) <- c("X", "Z", "U")
+  Vars <- data.frame(Vars)
+  Vars$Y <- 1 + Vars$X + Vars$U
+  
+  #OLS Regression
+  
+  OLS <- lm(Y ~ X, data = Vars)
+  OLS <- tidy(OLS)
+  
+  TSLS <- tsls(Y ~ I(X), data = Vars, instruments = ~Z)
+  se <- sqrt(diag(vcov(TSLS)))
+  
+  df <- data.frame(matrix(ncol = 3, nrow = 1))
+  colnames(df) <- c("term", "estimate", "std.error")
+  df$term <- "xTSLS"
+  df$std.error <- se[2]
+  df$estimate <- TSLS[["coefficients"]][["I(X)"]]
+  
+  df2 <- OLS[2, c(1:3)]
+  
+  Final <- rbind(df2, df)
+
+return(Final)
+  
+}
+
+FinalData7 <- rdply(n, RegFunction26())
+
+
+
+#.8 Correlation Between Z and U
+
+RegFunction28 <- function(){
+  
+  #Data Generation
+
+  mu <-c(0, 0, 0) # <== X, Z, U
+  Sigma <- matrix(c(1, 0.8, 0.4, 0.8, 1, .8, 0.4, .8, 1),
+  nrow = 3, byrow = TRUE) # Cor(X,Y)=0.8, etc.
+  Vars <- mvrnorm(500, mu, Sigma)
+  colnames(Vars) <- c("X", "Z", "U")
+  Vars <- data.frame(Vars)
+  Vars$Y <- 1 + Vars$X + Vars$U
+  
+  #OLS Regression
+  
+  OLS <- lm(Y ~ X, data = Vars)
+  OLS <- tidy(OLS)
+  
+  TSLS <- tsls(Y ~ I(X), data = Vars, instruments = ~Z)
+  se <- sqrt(diag(vcov(TSLS)))
+  
+  df <- data.frame(matrix(ncol = 3, nrow = 1))
+  colnames(df) <- c("term", "estimate", "std.error")
+  df$term <- "xTSLS"
+  df$std.error <- se[2]
+  df$estimate <- TSLS[["coefficients"]][["I(X)"]]
+  
+  df2 <- OLS[2, c(1:3)]
+  
+  Final <- rbind(df2, df)
+
+return(Final)
+  
+}
+
+FinalData8 <- rdply(n, RegFunction28())
+
+list(FinalData5, FinalData6, FinalData7, FinalData8)
+
+```
+As the instrument becomes more correlated with the error term, the estimate becomes increasingly wrong, but the standard errors do not change. This would result in completely wrong data that looks to be very precise.
+
+Part 2
+
+1.
+
+```{r}
+
+data <- read.csv("https://raw.githubusercontent.com/PrisonRodeo/PLSC503-2023-git/main/Exercises/PLSC503-2023-ExerciseFive.csv")
+
+model <- lm(data = data, quality ~ malty + bitter + calories + alcohol + price) #is craft supposed to be here; u in diagram is craft
+
+```
+
+2.
+
+```{r}
+
+#ivreg function --> list lm function followed by | and the the same amount of variables listed in the lm-- some with replaced instruments
+
+#Use Craft as instrument of price because of the endogenity between Quality and Price. 
+
+#This also reduces multicollinearity in the model, as Craft is not correlated to Alcohol and Colories like Price is
+
+resid <- resid(model)
+plot(data$malty, resid,
+       ylab = "Residuals", xlab = "Malty",
+       main = "Quality")
+abline(0, 0) #The Horizon
+
+plot(data$bitter, resid,
+       ylab = "Residuals", xlab = "Bitter",
+       main = "Quality")
+abline(0, 0) #The Horizon
+
+plot(data$calories, resid,
+       ylab = "Residuals", xlab = "Calories",
+       main = "Quality")
+abline(0, 0) #The Horizon
+
+plot(data$alcohol, resid,
+       ylab = "Residuals", xlab = "Alcohol",
+       main = "Quality")
+abline(0, 0) #The Horizon
+
+#Heteroskedasticity can't be fixed in the Alcohol or Calorie variables because the sample size is less than 250
+
+#Instrument Craft for Price
+TwoSLSCraft <- ivreg(quality ~ malty + bitter + calories + alcohol + price | malty + bitter + calories + alcohol + craftbeer, data = data)
+
+#This output shows that Alcohol and Bitter have the two most significant effects on the overall Quality index
+
+```
+
+After comporting with the figure, I decided to use "Craft" as an instrument for "Price". This, as a result, removes much of the endogenity between Quality and Price. Furthermore, this instrument will reduce multicollinearity in the model, as Alcohol and Calories are likely not correlated to Craft as strongly as to Price.
+
+In comparison to the standard OLS findings, substituting Craft for Price reduces the significance of Alcohol and increases the significance of Bitter. The significance of alcohol is likely reduced because multicollinearity between Alcohol and Price was reduced. I am unsure why Bitter increased in significance. Is it possible that Craft, in someway, predicts Bitterness? In other words, there is multicollinearity between Craft and Bitterness? 

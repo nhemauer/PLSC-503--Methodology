@@ -1,0 +1,226 @@
+---
+title: "503 Hemauer Assignment 7"
+output: html_notebook
+---
+
+Part 1
+
+1. Consistency https://stats.stackexchange.com/questions/498228/exponential-distribution-log-likelihood-and-maximum-likelihood-estimator
+
+```{r}
+
+library(maxLik)
+library(plyr)
+library(distr)
+
+set.seed(1337)
+
+lambda <- 2
+
+mle <- function(N){
+  x <- rexp(N, rate = lambda)
+
+  loglik <- function(lambda)
+     {
+         ll <- N * log(lambda) - lambda * sum(x)
+         return(ll)
+  }
+
+  hats <- maxLik(loglik, start = c(1))
+  summary(hats)
+}
+
+df <- rdply(100, mle(100)$estimate)
+hundred <- mean(df$Estimate)
+
+df <- rdply(100, mle(1000)$estimate)
+thousand <- mean(df$Estimate)
+
+df <- rdply(100, mle(10000)$estimate)
+tenThousand <- mean(df$Estimate)
+
+list(hundred, thousand, tenThousand)
+
+```
+
+As N becomes bigger, the simulations become much closer to the lambda value specified.
+
+2. Invariance to Reparameterization
+
+```{r}
+
+phi <- .5
+lambda <- 1/phi
+N <- 1000
+
+reparam <- function(N){
+
+  x <- rexp(N, rate = phi)
+
+  loglik <- function(phi)
+      {
+          ll <- sum(log(phi) - phi * x)
+          return(ll)
+      }
+
+hats <- maxLik(loglik, start = c(1))
+summary(hats)
+}
+
+df <- rdply(100, reparam(100)$estimate)
+df <- mean(df$Estimate)
+print(df)
+
+```
+
+3. 
+
+```{r}
+
+BFGS <- function(N){
+  x <- rexp(N)
+
+  loglik <- function(theta)
+     {
+         ll <- N * log(theta) - theta * sum(x)
+         return(ll)
+     }
+
+  hats <- maxLik(loglik, start = c(1), method = "BFGS")
+  summary(hats)
+}
+
+df <- rdply(100, BFGS(100)$estimate)
+BFGSHundred <- mean(df$Estimate)
+
+df <- rdply(100, BFGS(1000)$estimate)
+BFGSThousand <- mean(df$Estimate)
+
+df <- rdply(100, BFGS(10000)$estimate)
+BFGStenThousand <- mean(df$Estimate)
+
+list(BFGSHundred, BFGSThousand, BFGStenThousand)
+
+```
+
+In comparison to the NR method, the BFGS method slightly over predicts, rather than under predicts. The accuracy is, nonetheless, about the same.
+
+Part 2
+
+1. Calculate a Linear Model Using Maxiumum Likelihood
+
+http://rstudio-pubs-static.s3.amazonaws.com/159730_dc1df2f4cc0447fb866a0de3aeaa9117.html
+
+```{r}
+
+data <- read.csv("https://raw.githubusercontent.com/PrisonRodeo/PLSC503-2023-git/main/Exercises/PLSC503-2023-ExerciseSeven.csv")
+data <- subset(data, select = -c(State))
+
+#Obesity = B0 + B1Temp + B1Beer, + ui
+
+library(MASS)
+
+x1 <- data$Beer
+x2 <- data$Temp
+y <- data$Obesity
+
+variance <- var(data) * (length(data) / (length(data))) #vcov matrix
+
+sumSqMin <- function(par, data){
+  with(data, sum((par[1] + par[2] * x1 + par[3] * x2 - y)^2))
+}
+
+result <- optim(par = c(0, 0, 0), fn = sumSqMin, data = data, hessian = TRUE)
+print(result)
+
+
+
+
+```
+
+Nothing really interesting about this model. The variable representing temp is significant and it predicts that for every .14 units increase in temp, obesity increases by 1 unit. This means nothing likely because the adjusted R-squared is .1594 and there is likely significant multicollinearity; the South is the hottest, the South has the most unhealthy people, and the South has the least amount of support going to Education/Welfare.
+
+2. Calculating OLS
+
+```{r}
+
+ols <- lm(y ~ x1 + x2)
+summary(ols)
+vcov(ols)
+
+```
+
+Using maximum likelihood, the model predicts accurately. The estimates between the OLS and maxLik models are identical up to the 100ths position and the standard errors and variances are accurate. The goodness of the two models are roughly identical. 
+
+3. Evaluate the Following Hypotheses
+  a. B1 = .3
+  b. B2 = B1
+  c. Variance = 10
+
+```{r}
+
+library(car)
+
+sumSqMin <- function(par, data){
+  with(data, sum((par[1] + .3 * x1 + par[3] * x2 - y)^2))
+}
+
+result <- optim(par = c(0, 0, 0), fn = sumSqMin, data = data)
+print(result)
+
+
+sumSqMin <- function(par, data){
+  with(data, sum((par[1] + .3 * x1 + .3 * x2 - y)^2))
+}
+
+result <- optim(par = c(0, 0, 0), fn = sumSqMin, data = data, hessian = TRUE)
+print(result)
+
+#maxLik(sumSqMin(data), start = 0) #probably have to do it using maxLik, not sure how to hypothesis test optim
+
+linearHypothesis(ols, c("x1 = .3"))
+linearHypothesis(ols, c("x1 = x2"))
+
+#I have no idea how to test for variance equals 10.
+#I have no idea how to linear hypothesis test with optim()
+
+
+```
+The first hypothesis test, B1 = .3, is significant at the lowest level (.1). The second test, B1 = B2, is not significant at all. 
+
+4. Re Estimate MLE Using a Different Optimization
+
+```{r}
+
+sumSqMin <- function(par, data){
+  with(data, sum((par[1] + par[2] * x1 + par[3] * x2 - y)^2))
+}
+
+result <- optim(par = c(0, 0, 0), fn = sumSqMin, data = data, hessian = TRUE, method = "BFGS")
+print(result)
+
+```
+
+There is virtually no difference in using Newton-Rapheson compared to BFGS in this scenario.
+
+5. Re Estimate Under the Assumption that the Stochastic Component Follows a Logistic Distribution
+
+```{r}
+
+loglik <- function(theta, X, y){
+       beta <- theta[1:3]
+       sigma <- exp(theta[4])
+       mu <- X %*% beta
+       ll <- sum(dlogis(y, location = mu, scale = sigma, log = TRUE))
+       return(-ll)
+}
+
+X <- cbind(1, x1, x2)
+
+result <- optim(c(0, 0, 0, log(1)), fn = loglik, X = X, y = y)
+print(result)
+
+#maybe correct?
+
+```
+
